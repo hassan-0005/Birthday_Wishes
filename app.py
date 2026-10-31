@@ -167,11 +167,36 @@ DUAS_DATA = [
     {"start": "🛡️ 🕊️", "text": "Allah tumhein buri nazar, pareshani aur har takleef se mehfooz rakhe.", "end": "🤲"}
 ]
 
-# --- HTML RENDER HELPER (PREVENTS COMMONMARK 4-SPACE CODE BLOCK PARSING) ---
-def render_html(html_str):
-    """Renders raw HTML in Streamlit ensuring no leading indentation causes Markdown to interpret tags as code blocks."""
-    clean = "\n".join(line.strip() for line in html_str.strip().splitlines())
-    st.markdown(clean, unsafe_allow_html=True)
+# --- HTML CLEANER & STREAMLIT MARKDOWN AUTO-SANITIZER ---
+# In Streamlit, multiline Python strings with leading spaces (indentation)
+# or empty lines between tags are treated by CommonMark as <pre><code> code blocks.
+# clean_html strips all leading line whitespace and empty lines so HTML renders as true HTML.
+def clean_html(text):
+    if not isinstance(text, str):
+        return text
+    return chr(10).join(line.strip() for line in text.strip().splitlines() if line.strip())
+
+_orig_st_markdown = st.markdown
+def _safe_st_markdown(body, *args, **kwargs):
+    if kwargs.get("unsafe_allow_html", False) and isinstance(body, str):
+        body = clean_html(body)
+    return _orig_st_markdown(body, *args, **kwargs)
+st.markdown = _safe_st_markdown
+
+try:
+    from streamlit.delta_generator import DeltaGenerator
+    _orig_dg_markdown = DeltaGenerator.markdown
+    def _safe_dg_markdown(self, body, *args, **kwargs):
+        if kwargs.get("unsafe_allow_html", False) and isinstance(body, str):
+            body = clean_html(body)
+        return _orig_dg_markdown(self, body, *args, **kwargs)
+    DeltaGenerator.markdown = _safe_dg_markdown
+except Exception:
+    pass
+
+def render_html(html_str, target=st):
+    """Renders raw HTML safely in Streamlit without CommonMark code block conversion."""
+    target.markdown(clean_html(html_str), unsafe_allow_html=True)
 
 # --- UNIVERSAL STYLING & FONTS ---
 UNIVERSAL_CSS = """
@@ -444,7 +469,7 @@ div.stButton > button:active {
 }
 </style>
 """
-st.markdown(UNIVERSAL_CSS, unsafe_allow_html=True)
+render_html(UNIVERSAL_CSS)
 
 # --- COMPLETE FULL-PAGE CONTINUOUS LIVE MOVING EMOJI SNOWFALL (TOP TO BOTTOM) ---
 def render_complete_page_live_snowfall(theme="hearts"):
@@ -559,60 +584,52 @@ if not st.session_state.entered_world:
         countdown_placeholder = st.empty()
 
         # Step 0: Welcome greeting
-        countdown_placeholder.markdown("""
-        <div style="text-align: center; padding: 60px 20px;">
-            <div style="font-size: 3.5rem; margin-bottom: 12px;" class="soft-float">👀 💗</div>
-            <h1 class="title-greatvibes" style="font-size: 4.5rem;">Hey Ruhii!</h1>
-            <p style="font-family: 'Comfortaa', cursive; font-size: 1.35rem; font-weight: 700; color: #7B3F61; margin-top: 15px;">
-                Someone has a very special surprise for you... ✨
-            </p>
-            <p style="font-size: 1.05rem; color: #9E6B89; font-style: italic;">
-                Hold your breath! Starting the countdown...
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        countdown_placeholder.markdown("""<div style="text-align: center; padding: 60px 20px;">
+<div style="font-size: 3.5rem; margin-bottom: 12px;" class="soft-float">👀 💗</div>
+<h1 class="title-greatvibes" style="font-size: 4.5rem;">Hey Ruhii!</h1>
+<p style="font-family: 'Comfortaa', cursive; font-size: 1.35rem; font-weight: 700; color: #7B3F61; margin-top: 15px;">
+Someone has a very special surprise for you... ✨
+</p>
+<p style="font-size: 1.05rem; color: #9E6B89; font-style: italic;">
+Hold your breath! Starting the countdown...
+</p>
+</div>""", unsafe_allow_html=True)
         time.sleep(2.0)
 
         # Step 1: Countdown 3
-        countdown_placeholder.markdown("""
-        <div style="text-align: center; padding: 70px 20px;">
-            <div style="font-family: 'Comfortaa', cursive; font-size: 1.3rem; font-weight: 700; color: #BA68C8; letter-spacing: 2px; text-transform: uppercase;">
-                Are you ready, Ruhii?
-            </div>
-            <div style="font-family: 'Dancing Script', cursive; font-size: 7.5rem; font-weight: 700; color: #FF4081; text-shadow: 0 0 40px rgba(255, 64, 129, 0.6); margin: 15px 0;">
-                3...
-            </div>
-            <p style="font-family: 'Comfortaa', cursive; font-size: 1.2rem; color: #7B3F61; font-weight: 600;">A little magic is brewing 🌸</p>
-        </div>
-        """, unsafe_allow_html=True)
+        countdown_placeholder.markdown("""<div style="text-align: center; padding: 70px 20px;">
+<div style="font-family: 'Comfortaa', cursive; font-size: 1.3rem; font-weight: 700; color: #BA68C8; letter-spacing: 2px; text-transform: uppercase;">
+Are you ready, Ruhii?
+</div>
+<div style="font-family: 'Dancing Script', cursive; font-size: 7.5rem; font-weight: 700; color: #FF4081; text-shadow: 0 0 40px rgba(255, 64, 129, 0.6); margin: 15px 0;">
+3...
+</div>
+<p style="font-family: 'Comfortaa', cursive; font-size: 1.2rem; color: #7B3F61; font-weight: 600;">A little magic is brewing 🌸</p>
+</div>""", unsafe_allow_html=True)
         time.sleep(1.3)
 
         # Step 2: Countdown 2
-        countdown_placeholder.markdown("""
-        <div style="text-align: center; padding: 70px 20px;">
-            <div style="font-family: 'Comfortaa', cursive; font-size: 1.3rem; font-weight: 700; color: #BA68C8; letter-spacing: 2px; text-transform: uppercase;">
-                Smile please! 😌
-            </div>
-            <div style="font-family: 'Dancing Script', cursive; font-size: 8rem; font-weight: 700; color: #E040FB; text-shadow: 0 0 45px rgba(224, 64, 251, 0.65); margin: 15px 0;">
-                2...
-            </div>
-            <p style="font-family: 'Comfortaa', cursive; font-size: 1.2rem; color: #7B3F61; font-weight: 600;">Dhadkanein tez ho rahi hain? 💓</p>
-        </div>
-        """, unsafe_allow_html=True)
+        countdown_placeholder.markdown("""<div style="text-align: center; padding: 70px 20px;">
+<div style="font-family: 'Comfortaa', cursive; font-size: 1.3rem; font-weight: 700; color: #BA68C8; letter-spacing: 2px; text-transform: uppercase;">
+Smile please! 😌
+</div>
+<div style="font-family: 'Dancing Script', cursive; font-size: 8rem; font-weight: 700; color: #E040FB; text-shadow: 0 0 45px rgba(224, 64, 251, 0.65); margin: 15px 0;">
+2...
+</div>
+<p style="font-family: 'Comfortaa', cursive; font-size: 1.2rem; color: #7B3F61; font-weight: 600;">Dhadkanein tez ho rahi hain? 💓</p>
+</div>""", unsafe_allow_html=True)
         time.sleep(1.3)
 
         # Step 3: Countdown 1
-        countdown_placeholder.markdown("""
-        <div style="text-align: center; padding: 70px 20px;">
-            <div style="font-family: 'Comfortaa', cursive; font-size: 1.3rem; font-weight: 700; color: #BA68C8; letter-spacing: 2px; text-transform: uppercase;">
-                Here it comes! 🎉
-            </div>
-            <div style="font-family: 'Dancing Script', cursive; font-size: 8.5rem; font-weight: 700; color: #FF1744; text-shadow: 0 0 50px rgba(255, 23, 68, 0.7); margin: 15px 0;">
-                1...
-            </div>
-            <p style="font-family: 'Comfortaa', cursive; font-size: 1.2rem; color: #7B3F61; font-weight: 600;">Close your eyes & make a wish! 🌟</p>
-        </div>
-        """, unsafe_allow_html=True)
+        countdown_placeholder.markdown("""<div style="text-align: center; padding: 70px 20px;">
+<div style="font-family: 'Comfortaa', cursive; font-size: 1.3rem; font-weight: 700; color: #BA68C8; letter-spacing: 2px; text-transform: uppercase;">
+Here it comes! 🎉
+</div>
+<div style="font-family: 'Dancing Script', cursive; font-size: 8.5rem; font-weight: 700; color: #FF1744; text-shadow: 0 0 50px rgba(255, 23, 68, 0.7); margin: 15px 0;">
+1...
+</div>
+<p style="font-family: 'Comfortaa', cursive; font-size: 1.2rem; color: #7B3F61; font-weight: 600;">Close your eyes & make a wish! 🌟</p>
+</div>""", unsafe_allow_html=True)
         time.sleep(1.3)
 
         st.session_state.countdown_done = True
@@ -676,17 +693,17 @@ Aaj ka har pal sirf tumhari muskurahat ke naam hai! ✨
 if st.session_state.show_secret_page:
     render_complete_page_live_snowfall("stars")
 
-    st.markdown("""
+    render_html("""
     <div style="text-align: center; margin-top: 10px; margin-bottom: 15px;">
         <h1 class="title-greatvibes" style="color: #8E24AA; font-size: 3.5rem;">Ruhii's Secret Journey Log 🔒</h1>
         <p style="font-family: 'Comfortaa', cursive; font-size: 1.05rem; font-weight: 600; color: #6A1B9A;">
             Confidential Diary & Real-Time Bestie Activity Tracker
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     if not st.session_state.secret_unlocked:
-        st.markdown("""
+        render_html("""
         <div class="glass-card" style="text-align: center; max-width: 500px; margin: 0 auto; border: 2px solid #BA68C8;">
             <div style="font-size: 3.5rem; margin-bottom: 12px;">🔐 ✨ 💖</div>
             <h3 style="font-family: 'Comfortaa', cursive; color: #6A1B9A; font-weight: 700; margin-bottom: 10px;">
@@ -696,7 +713,7 @@ if st.session_state.show_secret_page:
                 This secret portal records every timestamp, page open duration, and action Ruhii takes on this website.
             </p>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
         col_pw1, col_pw2, col_pw3 = st.columns([1, 2, 1])
         with col_pw2:
@@ -713,7 +730,7 @@ if st.session_state.show_secret_page:
                 st.rerun()
 
     else:
-        st.markdown("""
+        render_html("""
         <div class="glass-card" style="border: 2px solid #BA68C8;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
                 <h3 style="font-family: 'Comfortaa', cursive; color: #6A1B9A; font-weight: 700; margin: 0;">
@@ -726,17 +743,17 @@ if st.session_state.show_secret_page:
             <p style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; color: #5C324E; margin-bottom: 16px;">
                 Here is the exact record of which surprises Ruhii explored, when she visited them, and how long she spent admiring each page:
             </p>
-        """, unsafe_allow_html=True)
+        """)
 
         for idx, item in enumerate(st.session_state.activity_log, 1):
-            st.markdown(f"""
+            render_html(f"""
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; margin-bottom: 8px; background: rgba(255, 255, 255, 0.9); border-radius: 14px; border-left: 4px solid #AB47BC; font-family: 'Outfit', sans-serif;">
                 <span style="font-weight: 600; color: #3E1E45;">{item['event']}</span>
                 <span style="font-size: 0.85rem; font-weight: 700; color: #8E24AA; background: #F3E5F5; padding: 3px 10px; border-radius: 12px;">{item['time']}</span>
             </div>
-            """, unsafe_allow_html=True)
+            """)
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        render_html("</div>")
 
         col_b1, col_b2 = st.columns([1, 1])
         with col_b1:
@@ -767,17 +784,17 @@ render_complete_page_live_snowfall(bg_themes.get(st.session_state.current_page, 
 # PAGE 1: BIRTHDAY WISHES 💌
 # ------------------------------------------------------------------------------
 if st.session_state.current_page == 1:
-    st.markdown("""
+    render_html("""
     <div style="text-align: center; margin-top: 5px; margin-bottom: 18px;">
         <h1 class="title-greatvibes">A Special Day for a Special Soul 💌</h1>
         <p class="subtitle-caveat">
             "Aj ka din sirf tumhara hai, madam! Toh smile karna compulsory hai. 😌"
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # Main Letter Card
-    st.markdown("""
+    render_html("""
     <div class="glass-card">
         <div style="text-align: center; font-size: 2.2rem; margin-bottom: 12px;">
             🌸 💌 💖
@@ -795,10 +812,10 @@ if st.session_state.current_page == 1:
             With endless love & blessings, Always 💗
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # Ultra Stylish Bulletin Card
-    st.markdown("""
+    render_html("""
     <div class="stylish-bulletin">
         <div class="bulletin-badge">
             <span>🚨</span>
@@ -809,7 +826,7 @@ if st.session_state.current_page == 1:
             "Breaking News: Aaj duniya ki sabse cute aur thori si pagal larki ka birthday hai! 😂 Sources confirm that madam is officially required to smile nonstop all day!"
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # Navigation Buttons
     col_p1, col_p2 = st.columns([1, 1])
@@ -829,32 +846,32 @@ if st.session_state.current_page == 1:
 # PAGE 2: DUAS AND BLESSINGS 🤲 (NO NUMBERING, STYLISH FONT, CUTE EMOJIS)
 # ------------------------------------------------------------------------------
 elif st.session_state.current_page == 2:
-    st.markdown("""
+    render_html("""
     <div style="text-align: center; margin-top: 5px; margin-bottom: 18px;">
         <h1 class="title-greatvibes" style="color: #8E24AA;">Prayers From My Heart 🤲</h1>
         <p class="subtitle-caveat" style="color: #6A1B9A;">
             "Allah tumhari zindagi ko khushiyon aur barkaton se bhar de. Ameen! 🤍"
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
-    st.markdown("""
+    render_html("""
     <div class="glass-card" style="background: rgba(255, 255, 255, 0.82); border-color: rgba(206, 147, 216, 0.6);">
         <div style="text-align: center; font-size: 2.2rem; margin-bottom: 18px;">
             ✨ 🌙 🕊️ 🤲 ✨
         </div>
-    """, unsafe_allow_html=True)
+    """)
 
     for item in DUAS_DATA:
-        st.markdown(f"""
+        render_html(f"""
         <div class="dua-card-new">
             <span style="font-size: 1.5rem; margin-right: 12px; select: none;">{item['start']}</span>
             <div class="dua-text-stylish">{item['text']}</div>
             <span style="font-size: 1.3rem; margin-left: 10px; select: none;">{item['end']}</span>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
-    st.markdown("""
+    render_html("""
         <div style="text-align: center; margin-top: 25px; padding: 14px; background: linear-gradient(135deg, rgba(234, 187, 240, 0.35), rgba(255, 214, 230, 0.45)); border-radius: 20px;">
             <div style="font-family: 'Great Vibes', cursive; font-size: 2.8rem; font-weight: 700; color: #7B1FA2;">
                 Ameen Sum Ameen! 🤲 🤍
@@ -864,7 +881,7 @@ elif st.session_state.current_page == 2:
             </div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # Navigation Buttons (Advances to new Gallery page!)
     c_prev2, c_next2 = st.columns([1, 1])
@@ -882,7 +899,7 @@ elif st.session_state.current_page == 2:
 # NEW PAGE 3: RUHII'S ROYAL PHOTO GALLERY 📸 👑 (RIGHT AFTER DUAS!)
 # ------------------------------------------------------------------------------
 elif st.session_state.current_page == 3:
-    st.markdown("""
+    render_html("""
     <div style="text-align: center; margin-top: 5px; margin-bottom: 18px;">
         <div style="display: inline-block; padding: 5px 18px; border-radius: 50px; background: linear-gradient(135deg, #FF4081, #AB47BC); color: white; font-family: 'Comfortaa', cursive; font-size: 0.85rem; font-weight: 700; margin-bottom: 8px;">
             📸 The Queen's Visual Diary ✨
@@ -892,7 +909,7 @@ elif st.session_state.current_page == 3:
             "Har photo mein ek alag hi noor aur masoomiyat hai! MashAllah 🤍"
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # 4 Photo Cards Grid
     col_g1, col_g2 = st.columns(2)
@@ -926,16 +943,16 @@ elif st.session_state.current_page == 3:
 # PAGE 4: FUNNY AND CUTE SECTION 😂 (DECENT, ELEGANT FONTS, NO POINTING HANDS)
 # ------------------------------------------------------------------------------
 elif st.session_state.current_page == 4:
-    st.markdown("""
+    render_html("""
     <div style="text-align: center; margin-top: 5px; margin-bottom: 18px;">
         <h1 class="title-greatvibes" style="color: #E64A19;">Ruhii Ki Pagalpanti Department 😂</h1>
         <p class="subtitle-caveat" style="color: #D84315;">
             "Warning: Is page ko dekh kar hansna mana nahi hai! 🤣"
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
-    st.markdown("""
+    render_html("""
     <div class="glass-card" style="border: 2px dashed #FFAB91;">
         <div style="text-align: center; font-size: 2.4rem; margin-bottom: 12px;">
             🤪 🍰 🍟 🎭 👑
@@ -943,7 +960,7 @@ elif st.session_state.current_page == 4:
         <h3 style="text-align: center; font-family: 'Comfortaa', cursive; color: #D84315; font-weight: 700; margin-bottom: 18px;">
             Official Birthday Truths 📢
         </h3>
-    """, unsafe_allow_html=True)
+    """)
 
     roasts_clean = [
         {"icon": "🏆", "text": "Congratulations! Tum officially ek saal aur experienced ho gayi ho... lekin harkatein abhi bhi bachon wali hain. 😂"},
@@ -953,24 +970,24 @@ elif st.session_state.current_page == 4:
     ]
 
     for item in roasts_clean:
-        st.markdown(f"""
+        render_html(f"""
         <div class="masti-card-decent">
             <span style="font-size: 1.7rem; select: none;">{item['icon']}</span>
             <div>{item['text']}</div>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    render_html("</div>")
 
     # Interactive Compliment Generator with decent font
-    st.markdown("""
+    render_html("""
     <div class="glass-card" style="text-align: center; background: rgba(255, 255, 255, 0.88); border: 2px solid #FF80AB;">
         <div style="font-size: 2rem; margin-bottom: 8px;">🎁 💝 👑</div>
         <h3 style="font-family: 'Comfortaa', cursive; color: #C2185B; font-weight: 700; margin-bottom: 10px;">Special Mystery Compliment Generator</h3>
         <p style="font-family: 'Outfit', sans-serif; font-size: 0.98rem; color: #733454; margin-bottom: 18px; font-weight: 500;">
             Press the magic button below to unlock a sweet & funny truth about you!
         </p>
-    """, unsafe_allow_html=True)
+    """)
 
     if st.button("Reveal My Birthday Compliment 💝", key="btn_compliment"):
         selected_comp = random.choice(COMPLIMENTS)
@@ -978,7 +995,7 @@ elif st.session_state.current_page == 4:
         log_activity(f"Revealed Compliment: '{selected_comp[:35]}...'")
 
     if st.session_state.compliment:
-        st.markdown(f"""
+        render_html(f"""
         <div style="margin-top: 18px; padding: 18px 24px; background: linear-gradient(135deg, #FFF0F5, #FCE4EC);
                     border: 2px solid #F06292; border-radius: 20px; box-shadow: 0 8px 25px rgba(240, 98, 146, 0.25);">
             <div style="font-size: 1.8rem; margin-bottom: 6px;">✨ 💖 ✨</div>
@@ -989,9 +1006,9 @@ elif st.session_state.current_page == 4:
                 (100% Certified Sach! 😌)
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    render_html("</div>")
 
     # Navigation Buttons
     c_prev4, c_next4 = st.columns([1, 1])
@@ -1009,17 +1026,17 @@ elif st.session_state.current_page == 4:
 # PAGE 5: SPECIAL MESSAGE ❤️ (COOL STYLISH LETTER FONT & SECRET HEART)
 # ------------------------------------------------------------------------------
 elif st.session_state.current_page == 5:
-    st.markdown("""
+    render_html("""
     <div style="text-align: center; margin-top: 5px; margin-bottom: 18px;">
         <h1 class="title-greatvibes" style="color: #D81B60;">One Last Thing, Ruhii... ❤️</h1>
         <p class="subtitle-caveat" style="color: #AD1457;">
             "Kuch baatein hoti hain jo words mein explain karna mushkil hota hai."
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # Emotional Heartfelt Card with cool stylish font
-    st.markdown("""
+    render_html("""
     <div class="glass-card" style="border: 2px solid rgba(244, 143, 177, 0.8);">
         <div style="text-align: center; margin: 10px 0 20px;">
             <div class="pulsing-heart" style="font-size: 5rem; filter: drop-shadow(0 6px 20px rgba(233, 30, 99, 0.4));">
@@ -1041,7 +1058,7 @@ elif st.session_state.current_page == 5:
             </div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # Hug Feature
     hug_col1, hug_col2, hug_col3 = st.columns([1, 3, 1])
@@ -1052,7 +1069,7 @@ elif st.session_state.current_page == 5:
 
     if st.session_state.show_hug:
         st.balloons()
-        st.markdown("""
+        render_html("""
         <div class="glass-card" style="text-align: center; background: linear-gradient(135deg, #FFE4E1, #FFF0F5); border: 2.5px solid #FF4081; margin-top: 20px;">
             <div style="font-size: 4rem;" class="pulsing-heart">🤗 💗 🫂</div>
             <div style="font-family: 'Great Vibes', cursive; font-size: 3.2rem; font-weight: 700; color: #E91E63; margin: 10px 0;">
@@ -1062,7 +1079,7 @@ elif st.session_state.current_page == 5:
                 May your whole year ahead be as soft, warm, and comforting as the biggest hug!
             </p>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
     # Navigation Buttons
     col_p5_1, col_p5_2 = st.columns([1, 1])
@@ -1076,7 +1093,7 @@ elif st.session_state.current_page == 5:
             st.rerun()
 
     # Footer with user-requested dedication: "Made with Love for MY Dear Bestiee ❤️"
-    st.markdown("""
+    render_html("""
     <div style="text-align: center; margin-top: 40px; padding: 20px 0; border-top: 1px dashed rgba(200, 140, 180, 0.4);">
         <p style="font-family: 'Great Vibes', cursive; font-size: 2.4rem; color: #8E4A72; font-weight: 700; margin-bottom: 4px;">
             Made with Love for MY Dear Bestiee ❤️
@@ -1085,7 +1102,7 @@ elif st.session_state.current_page == 5:
             A Little World Made for Ruhii 💗 • Happy Birthday!
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # Discreet Heart Secret Button
     c_sec1, c_sec2, c_sec3 = st.columns([5, 1, 5])
