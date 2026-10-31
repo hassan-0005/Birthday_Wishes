@@ -167,6 +167,12 @@ DUAS_DATA = [
     {"start": "🛡️ 🕊️", "text": "Allah tumhein buri nazar, pareshani aur har takleef se mehfooz rakhe.", "end": "🤲"}
 ]
 
+# --- HTML RENDER HELPER (PREVENTS COMMONMARK 4-SPACE CODE BLOCK PARSING) ---
+def render_html(html_str):
+    """Renders raw HTML in Streamlit ensuring no leading indentation causes Markdown to interpret tags as code blocks."""
+    clean = "\n".join(line.strip() for line in html_str.strip().splitlines())
+    st.markdown(clean, unsafe_allow_html=True)
+
 # --- UNIVERSAL STYLING & FONTS ---
 UNIVERSAL_CSS = """
 <style>
@@ -619,54 +625,38 @@ if not st.session_state.entered_world:
 
         photo_markup = ""
         if RUHII_PORTRAIT_B64:
-            photo_markup = f"""
-            <div style="text-align: center; margin: 15px 0 20px;">
-                <div class="portrait-glow-ring">
-                    <img src="{RUHII_PORTRAIT_B64}" alt="Ruhii" class="portrait-img" />
-                </div>
-                <div style="margin-top: 10px;">
-                    <span style="background: rgba(255, 255, 255, 0.95); padding: 5px 16px; border-radius: 50px; font-family: 'Comfortaa', cursive; font-weight: 700; font-size: 0.85rem; color: #C2185B; box-shadow: 0 4px 15px rgba(219, 39, 119, 0.2); border: 1px solid rgba(255, 182, 193, 0.8);">
-                        👑 Birthday Princess Ruhii ✨
-                    </span>
-                </div>
-            </div>
-            """
+            photo_markup = f"""<div style="text-align: center; margin: 15px 0 20px;">
+<div class="portrait-glow-ring"><img src="{RUHII_PORTRAIT_B64}" alt="Ruhii" class="portrait-img" /></div>
+<div style="margin-top: 10px;">
+<span style="background: rgba(255, 255, 255, 0.95); padding: 5px 16px; border-radius: 50px; font-family: 'Comfortaa', cursive; font-weight: 700; font-size: 0.85rem; color: #C2185B; box-shadow: 0 4px 15px rgba(219, 39, 119, 0.2); border: 1px solid rgba(255, 182, 193, 0.8);">
+👑 Birthday Princess Ruhii ✨
+</span>
+</div>
+</div>"""
 
-        reveal_html = f"""
-        <div style="text-align: center; padding: 20px 15px 30px;">
-            <div style="font-size: 2.8rem; margin-bottom: 6px;">
-                🎈 ✨ 👑 💖 🥳 🎈
-            </div>
-
-            <h1 style="font-family: 'Dancing Script', cursive; font-size: 3.8rem; font-weight: 700;
-                       background: linear-gradient(135deg, #FF1493, #9C27B0, #FF69B4);
-                       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-                       text-shadow: 0 6px 25px rgba(255, 20, 147, 0.35); margin: 5px 0 8px;">
-                HAPPY BIRTHDAY RUHII! 🎂
-            </h1>
-
-            <div style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.25rem; color: #C2417C; font-weight: 600; margin-bottom: 18px;">
-                "A Little World Made for Ruhii 💗"
-            </div>
-
-            {photo_markup}
-
-            <div class="glass-card" style="max-width: 620px; margin: 0 auto 25px; border: 2px solid rgba(255, 182, 193, 0.8);">
-                <div style="font-size: 1.5rem; margin-bottom: 10px;">
-                    🎂 🕯️ 🕯️ 🕯️ ✨
-                </div>
-
-                <p style="font-family: 'Comfortaa', cursive; font-size: 1.2rem; font-weight: 700; color: #532C4A; line-height: 1.6; margin-bottom: 10px;">
-                    Made with a little madness, endless duas, and lots of love.
-                </p>
-
-                <p style="font-size: 0.98rem; color: #8F557C; margin-bottom: 0;">
-                    Aaj ka har pal sirf tumhari muskurahat ke naam hai! ✨
-                </p>
-            </div>
-        </div>
-        """
-        st.markdown(reveal_html, unsafe_allow_html=True)
+        reveal_html = f"""<div style="text-align: center; padding: 20px 15px 30px;">
+<div style="font-size: 2.8rem; margin-bottom: 6px;">🎈 ✨ 👑 💖 🥳 🎈</div>
+<h1 style="font-family: 'Dancing Script', cursive; font-size: 3.8rem; font-weight: 700;
+background: linear-gradient(135deg, #FF1493, #9C27B0, #FF69B4);
+-webkit-background-clip: text; -webkit-text-fill-color: transparent;
+text-shadow: 0 6px 25px rgba(255, 20, 147, 0.35); margin: 5px 0 8px;">
+HAPPY BIRTHDAY RUHII! 🎂
+</h1>
+<div style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.25rem; color: #C2417C; font-weight: 600; margin-bottom: 18px;">
+"A Little World Made for Ruhii 💗"
+</div>
+{photo_markup}
+<div class="glass-card" style="max-width: 620px; margin: 0 auto 25px; border: 2px solid rgba(255, 182, 193, 0.8);">
+<div style="font-size: 1.5rem; margin-bottom: 10px;">🎂 🕯️ 🕯️ 🕯️ ✨</div>
+<p style="font-family: 'Comfortaa', cursive; font-size: 1.2rem; font-weight: 700; color: #532C4A; line-height: 1.6; margin-bottom: 10px;">
+Made with a little madness, endless duas, and lots of love.
+</p>
+<p style="font-size: 0.98rem; color: #8F557C; margin-bottom: 0;">
+Aaj ka har pal sirf tumhari muskurahat ke naam hai! ✨
+</p>
+</div>
+</div>"""
+        render_html(reveal_html)
 
         col1, col2, col3 = st.columns([1, 4, 1])
         with col2:
@@ -912,22 +902,13 @@ elif st.session_state.current_page == 3:
         with target_col:
             img_html = ""
             if item["img"]:
-                img_html = f"""
-                <div class="gallery-img-wrapper">
-                    <img src="{item['img']}" alt="{item['title']}" />
-                </div>
-                """
-            st.markdown(f"""
-            <div class="gallery-card">
-                {img_html}
-                <h4 style="font-family: 'Comfortaa', cursive; font-weight: 700; color: #880E4F; font-size: 1.05rem; margin-bottom: 6px;">
-                    {item['title']}
-                </h4>
-                <p style="font-family: 'Outfit', sans-serif; font-size: 0.88rem; color: #5C324E; font-weight: 500; line-height: 1.5; margin: 0;">
-                    {item['tagline']}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
+                img_html = f'<div class="gallery-img-wrapper"><img src="{item["img"]}" alt="{item["title"]}" /></div>'
+            card_html = f"""<div class="gallery-card">
+{img_html}
+<h4 style="font-family: 'Comfortaa', cursive; font-weight: 700; color: #880E4F; font-size: 1.05rem; margin-bottom: 6px;">{item['title']}</h4>
+<p style="font-family: 'Outfit', sans-serif; font-size: 0.88rem; color: #5C324E; font-weight: 500; line-height: 1.5; margin: 0;">{item['tagline']}</p>
+</div>"""
+            render_html(card_html)
 
     # Navigation Buttons
     c_prev3, c_next3 = st.columns([1, 1])
