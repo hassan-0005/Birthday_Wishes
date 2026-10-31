@@ -572,7 +572,51 @@ def play_celebration_bells():
     })();
     </script>
     """
-    components.html(chimes_js, height=0, width=0)
+# --- INSTANT AUTO-SCROLL TO TOP ON PAGE SWITCH / NAVIGATION ---
+def scroll_to_top():
+    """Forces Streamlit scroll containers, parent window, and elements to jump immediately to the top."""
+    js = f"""
+    <div id="scroll-top-trigger-{random.randint(1000, 9999)}" style="display:none; height:0; width:0;"></div>
+    <script>
+    (function() {{
+        function jumpToTop() {{
+            try {{
+                if (window.parent && window.parent.document) {{
+                    const pDoc = window.parent.document;
+                    const selectors = [
+                        '[data-testid="stAppViewContainer"]',
+                        '[data-testid="stMain"]',
+                        'section.main',
+                        '.main',
+                        '.stApp',
+                        '.block-container'
+                    ];
+                    selectors.forEach(function(sel) {{
+                        const el = pDoc.querySelector(sel);
+                        if (el) el.scrollTop = 0;
+                    }});
+                    const topTarget = pDoc.querySelector('.block-container') || pDoc.querySelector('h1') || pDoc.body;
+                    if (topTarget && topTarget.scrollIntoView) {{
+                        topTarget.scrollIntoView({{ behavior: 'instant', block: 'start' }});
+                    }}
+                    if (pDoc.documentElement) pDoc.documentElement.scrollTop = 0;
+                    if (pDoc.body) pDoc.body.scrollTop = 0;
+                    if (window.parent.scrollTo) window.parent.scrollTo(0, 0);
+                }}
+            }} catch(e) {{}}
+            window.scrollTo(0, 0);
+            if (document.documentElement) document.documentElement.scrollTop = 0;
+            if (document.body) document.body.scrollTop = 0;
+        }}
+        // Execute immediately, then repeated to defeat button autofocus retention
+        jumpToTop();
+        setTimeout(jumpToTop, 30);
+        setTimeout(jumpToTop, 100);
+        setTimeout(jumpToTop, 250);
+    }})();
+    </script>
+    """
+    components.html(js, height=0, width=0)
 
 # ==============================================================================
 # 1. OPENING EXPERIENCE - AUTOMATIC COUNTDOWN & GRAND REVEAL WITH PHOTO
@@ -691,6 +735,7 @@ Aaj ka har pal sirf tumhari muskurahat ke naam hai! ✨
 # SECRET PAGE (PASSWORD-PROTECTED RUHII ACTIVITY & HISTORY TRACKER)
 # ==============================================================================
 if st.session_state.show_secret_page:
+    scroll_to_top()
     render_complete_page_live_snowfall("stars")
 
     render_html("""
@@ -778,6 +823,9 @@ if st.session_state.show_secret_page:
 # Background theme per page with complete full-page downward live snowfall
 bg_themes = {1: "hearts", 2: "stars", 3: "gallery", 4: "confetti", 5: "hearts"}
 render_complete_page_live_snowfall(bg_themes.get(st.session_state.current_page, "hearts"))
+
+# GUARANTEE SCROLL TO TOP ON EVERY PAGE SWITCH / RERUN
+scroll_to_top()
 
 
 # ------------------------------------------------------------------------------
