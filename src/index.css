@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-script {
+    font-family: 'Dancing Script', cursive;
+  }
+  .font-greatvibes {
+    font-family: 'Great Vibes', cursive;
+  }
+  .font-caveat {
+    font-family: 'Caveat', cursive;
+  }
+  .font-cormorant {
+    font-family: 'Cormorant Garamond', serif;
+  }
+  .font-comfortaa {
+    font-family: 'Comfortaa', cursive;
+  }
+  .font-outfit {
+    font-family: 'Outfit', sans-serif;
+  }
+  .font-serif-title {
+    font-family: 'Playfair Display', serif;
+  }
+  .font-sans-body {
+    font-family: 'Quicksand', sans-serif;
+  }
+}
+
+@keyframes snowFallDrift {
+  0% {
+    transform: translateY(-10vh) translateX(0px) rotate(0deg) scale(0.8);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.8;
+  }
+  88% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(115vh) translateX(55px) rotate(360deg) scale(1.08);
+    opacity: 0;
+  }
+}
+
+.animate-float-up,
+.animate-snowfall {
+  animation: snowFallDrift 11s linear infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 15px rgba(244, 114, 182, 0.5));
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 25px rgba(236, 72, 153, 0.8));
+  }
+}
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.animate-float-gentle {
+  animation: floatGentle 3.5s ease-in-out infinite;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255, 215, 230, 0.7);
+  box-shadow: 0 15px 35px rgba(220, 160, 195, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}

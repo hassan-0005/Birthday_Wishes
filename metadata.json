@@ -1,0 +1,6 @@
+{
+  "name": "A Little World Made for Ruhii 💗",
+  "description": "A magical, interactive birthday surprise website made especially for Ruhii with love, duas, and cute memories.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
