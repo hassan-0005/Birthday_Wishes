@@ -4,6 +4,10 @@ import random
 import time
 import os
 import base64
+import io
+import math
+import struct
+import wave
 from datetime import datetime
 
 # --- PAGE CONFIGURATION ---
@@ -540,38 +544,125 @@ def render_complete_page_live_snowfall(theme="hearts"):
     """
     components.html(html_code, height=0, width=0)
 
-# --- CELEBRATORY CHIMES & BELLS ONLY (VOICE REMOVED AS REQUESTED) ---
-def play_celebration_bells():
-    """Play melodic celebratory chimes and bells via Web Audio API"""
-    chimes_js = """
+# --- PURE PYTHON IN-MEMORY CELEBRATION CHIMES WAV SYNTHESIZER ---
+@st.cache_data
+def get_birthday_chimes_wav():
+    """Synthesizes a crystalline music-box celebratory birthday chime melody in pure Python."""
+    sample_rate = 22050
+    notes = [
+        (392.00, 0.32), # G4
+        (392.00, 0.32), # G4
+        (440.00, 0.60), # A4
+        (392.00, 0.60), # G4
+        (523.25, 0.65), # C5
+        (493.88, 1.05), # B4
+        (523.25, 0.35), # C5 chime
+        (659.25, 0.35), # E5 chime
+        (783.99, 0.35), # G5 chime
+        (1046.50, 0.45), # C6 chime
+        (1318.51, 0.50), # E6 chime
+        (1567.98, 1.10)  # G6 sparkle
+    ]
+    total_samples = []
+    for freq, duration in notes:
+        n_samples = int(sample_rate * duration)
+        for i in range(n_samples):
+            t = i / sample_rate
+            env = math.exp(-3.5 * (t / duration))
+            val = math.sin(2 * math.pi * freq * t) * 0.62 + \
+                  math.sin(2 * math.pi * freq * 2.0 * t) * 0.24 + \
+                  math.sin(2 * math.pi * freq * 3.01 * t) * 0.14
+            sample = int(val * env * 24000)
+            total_samples.append(max(-32768, min(32767, sample)))
+            
+    wav_io = io.BytesIO()
+    with wave.open(wav_io, 'wb') as f:
+        f.setnchannels(1)
+        f.setsampwidth(2)
+        f.setframerate(sample_rate)
+        f.writeframes(struct.pack('<' + 'h' * len(total_samples), *total_samples))
+    return wav_io.getvalue()
+
+# --- INTERACTIVE SOUND CONTROLLER (OVERCOMES BROWSER AUTOPLAY RESTRICTIONS) ---
+def render_sound_controller(label="🔔 Play Birthday Bells & Music ✨"):
+    """Renders an interactive sound button that uses user click to instantly bypass browser autoplay blocks."""
+    js_player = f"""
+    <div style="text-align: center; margin: 10px 0 15px;">
+        <button id="btn-birthday-audio" onclick="triggerCelebrationChimes()" style="
+            background: linear-gradient(135deg, #FF4081, #BA68C8, #FF69B4);
+            color: #FFFFFF;
+            border: 2px solid rgba(255, 255, 255, 0.95);
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-family: 'Comfortaa', cursive;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(233, 30, 99, 0.35);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        ">
+            <span>🔔</span>
+            <span id="audio-btn-txt">{label}</span>
+            <span>🎶</span>
+        </button>
+    </div>
     <script>
-    (function() {
-        try {
+    function triggerCelebrationChimes() {{
+        try {{
             const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (AudioContext) {
-                const ctx = new AudioContext();
-                const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
-                notes.forEach((freq, i) => {
-                    setTimeout(() => {
-                        const osc = ctx.createOscillator();
-                        const gain = ctx.createGain();
-                        osc.type = 'triangle';
-                        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-                        gain.gain.setValueAtTime(0.12, ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.65);
-                        osc.connect(gain);
-                        gain.connect(ctx.destination);
-                        osc.start();
-                        osc.stop(ctx.currentTime + 0.65);
-                    }, i * 140);
-                });
-            }
-        } catch(e) {
-            console.log(e);
-        }
-    })();
+            const ctx = new AudioContext();
+            if (ctx.state === 'suspended') {{
+                ctx.resume();
+            }}
+            const btnTxt = document.getElementById('audio-btn-txt');
+            if (btnTxt) btnTxt.innerText = "Playing Sweet Melodies... 🎵";
+            
+            const melody = [
+                {{f: 392.00, d: 0.30}},
+                {{f: 392.00, d: 0.30}},
+                {{f: 440.00, d: 0.55}},
+                {{f: 392.00, d: 0.55}},
+                {{f: 523.25, d: 0.60}},
+                {{f: 493.88, d: 0.90}},
+                {{f: 523.25, d: 0.35}},
+                {{f: 659.25, d: 0.35}},
+                {{f: 783.99, d: 0.35}},
+                {{f: 1046.50, d: 0.50}},
+                {{f: 1318.51, d: 0.55}},
+                {{f: 1567.98, d: 1.10}}
+            ];
+            let curTime = ctx.currentTime + 0.05;
+            melody.forEach(function(note) {{
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(note.f, curTime);
+                gain.gain.setValueAtTime(0.15, curTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, curTime + note.d);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(curTime);
+                osc.stop(curTime + note.d);
+                curTime += note.d * 0.9;
+            }});
+
+            setTimeout(function() {{
+                if (btnTxt) btnTxt.innerText = "{label}";
+            }}, (curTime - ctx.currentTime) * 1000 + 300);
+        }} catch(e) {{
+            console.log("Audio play error:", e);
+        }}
+    }}
     </script>
     """
+    components.html(js_player, height=65)
+
+def play_celebration_bells():
+    """Play background celebratory bells trigger"""
+    render_sound_controller()
 # --- INSTANT AUTO-SCROLL TO TOP ON PAGE SWITCH / NAVIGATION ---
 def scroll_to_top():
     """Forces Streamlit scroll containers, parent window, and elements to jump immediately to the top."""
@@ -719,6 +810,10 @@ Aaj ka har pal sirf tumhari muskurahat ke naam hai! ✨
 </div>"""
         render_html(reveal_html)
 
+        render_sound_controller("🔔 Play Birthday Bells & Music ✨")
+        with st.expander("🎵 Birthday Music Player 🎶 (Click to Listen)"):
+            st.audio(get_birthday_chimes_wav(), format="audio/wav")
+
         col1, col2, col3 = st.columns([1, 4, 1])
         with col2:
             if st.button("Okay Princess, Enter Your World 💗", key="btn_enter_world"):
@@ -826,6 +921,11 @@ render_complete_page_live_snowfall(bg_themes.get(st.session_state.current_page, 
 
 # GUARANTEE SCROLL TO TOP ON EVERY PAGE SWITCH / RERUN
 scroll_to_top()
+
+# Music box player accessible throughout the surprises
+with st.expander("🎵 Birthday Music & Chimes 🎶 (Tap to Play/Pause)"):
+    render_sound_controller("🔔 Play Melodic Birthday Bells")
+    st.audio(get_birthday_chimes_wav(), format="audio/wav")
 
 
 # ------------------------------------------------------------------------------
